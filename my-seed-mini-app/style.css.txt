@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Seed Tutorial Center</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .card {
+            background: white;
+            margin: 15px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f0f2f5;
+            color: #333;
+        }
+        
+        .status-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f0f2f5;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .status-verified {
+            color: #48bb78;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            color: #ed8936;
+            font-weight: bold;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="hidden">
+        <div class="header">
+            <h1>🌱 My Seed Center</h1>
+            <p id="welcome-text">Welcome!</p>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Your Status</h3>
+            <div class="status-box">
+                <span>Payment Status:</span>
+                <span id="payment-status" class="status-pending">Loading...</span>
+            </div>
+            <p id="plan-info" style="font-size: 14px; color: #666; margin-top: 10px;"></p>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Quick Actions</h3>
+            <button class="btn btn-primary" onclick="bookClass()">
+                📅 Book a Class
+            </button>
+            <button class="btn btn-secondary" onclick="viewSchedule()">
+                📆 My Schedule
+            </button>
+            <button class="btn btn-secondary" onclick="verifyPayment()">
+                💳 Verify Payment
+            </button>
+            <button class="btn btn-secondary" onclick="viewProgress()">
+                📊 My Progress
+            </button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Upcoming Classes</h3>
+            <div id="classes-list">
+                <p style="color: #999; text-align: center; padding: 20px;">No classes scheduled</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Need Help?</h3>
+            <button class="btn btn-secondary" onclick="contactTeacher()">
+                📞 Contact Teacher Dani
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        let tg = window.Telegram.WebApp;
+        let user = null;
+
+        // When page loads
+        window.onload = function() {
+            tg.expand();
+            tg.ready();
+            
+            // Get user info from Telegram
+            user = tg.initDataUnsafe.user;
+            
+            if (user) {
+                document.getElementById('welcome-text').textContent = 
+                    'Welcome, ' + user.first_name + '!';
+                
+                // Load student data (fake data for now)
+                setTimeout(function() {
+                    loadStudentData();
+                }, 1000);
+            } else {
+                alert('Please open this app through Telegram');
+            }
+        };
+
+        function loadStudentData() {
+            // Fake data - in real app, this comes from your server
+            var studentData = {
+                payment_verified: true,
+                plan_expiry: '2024-04-20',
+                upcoming_classes: [
+                    {subject: 'Physics', day: 'Monday', time: '4:00 PM'},
+                    {subject: 'Maths', day: 'Wednesday', time: '2:00 PM'}
+                ]
+            };
+
+            // Update payment status
+            var statusEl = document.getElementById('payment-status');
+            var planInfoEl = document.getElementById('plan-info');
+            
+            if (studentData.payment_verified) {
+                statusEl.textContent = '✅ Verified';
+                statusEl.className = 'status-verified';
+                planInfoEl.textContent = 'Plan expires: ' + studentData.plan_expiry;
+            } else {
+                statusEl.textContent = '❌ Not Verified';
+                statusEl.className = 'status-pending';
+                planInfoEl.textContent = 'Please verify payment to book classes';
+            }
+
+            // Update classes list
+            var classesList = document.getElementById('classes-list');
+            if (studentData.upcoming_classes.length > 0) {
+                var html = '';
+                for (var i = 0; i < studentData.upcoming_classes.length; i++) {
+                    var c = studentData.upcoming_classes[i];
+                    html += '<div style="padding: 10px; background: #f0f2f5; border-radius: 8px; margin-bottom: 8px;">';
+                    html += '<strong>' + c.subject + '</strong><br>';
+                    html += '<small>' + c.day + ' at ' + c.time + '</small>';
+                    html += '</div>';
+                }
+                classesList.innerHTML = html;
+            }
+
+            // Hide loading, show content
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+        }
+
+        function bookClass() {
+            // Send message back to bot
+            tg.sendData(JSON.stringify({action: 'book_class'}));
+            tg.close();
+        }
+
+        function viewSchedule() {
+            tg.sendData(JSON.stringify({action: 'view_schedule'}));
+            tg.close();
+        }
+
+        function verifyPayment() {
+            tg.sendData(JSON.stringify({action: 'verify_payment'}));
+            tg.close();
+        }
+
+        function viewProgress() {
+            tg.sendData(JSON.stringify({action: 'view_progress'}));
+            tg.close();
+        }
+
+        function contactTeacher() {
+            tg.sendData(JSON.stringify({action: 'contact'}));
+            tg.close();
+        }
+    </script>
+</body>
+</html>
